@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   AbsoluteFill,
+  Audio,
   Img,
   interpolate,
   spring,
@@ -167,6 +168,9 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
             {row.dialogue}
           </div>
         </div>
+
+        {/* 自动真人语音旁白 */}
+        <Audio src={staticFile(`audio/shot_0${row.id}.m4a`)} volume={1.0} />
       </AbsoluteFill>
     );
   }
@@ -242,6 +246,9 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
             {row.dialogue}
           </div>
         </div>
+
+        {/* 自动真人语音旁白 */}
+        <Audio src={staticFile(`audio/shot_0${row.id}.m4a`)} volume={1.0} />
       </AbsoluteFill>
     );
   }
@@ -411,6 +418,9 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
           {row.dialogue}
         </div>
       </div>
+
+      {/* 自动真人语音旁白 */}
+      <Audio src={staticFile(`audio/shot_0${row.id}.m4a`)} volume={1.0} />
     </AbsoluteFill>
   );
 };

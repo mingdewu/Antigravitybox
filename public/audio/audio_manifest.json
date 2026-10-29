@@ -1,0 +1,51 @@
+[
+  {
+    "id": 1,
+    "dialogue": "逃离城市的最快方式，就是只带一台相机出发。",
+    "audioFile": "shot_01.m4a",
+    "exactAudioDuration": 4.669887,
+    "recommendedClipDuration": 5.3
+  },
+  {
+    "id": 2,
+    "dialogue": "第一站来到鸣门海峡，俯瞰奔腾澎湃的大漩涡。",
+    "audioFile": "shot_02.m4a",
+    "exactAudioDuration": 4.706712,
+    "recommendedClipDuration": 5.3
+  },
+  {
+    "id": 3,
+    "dialogue": "穿过险峻峡谷的山野公路，窗外的大山逐渐变成了太平洋。",
+    "audioFile": "shot_03.m4a",
+    "exactAudioDuration": 5.755011,
+    "recommendedClipDuration": 6.4
+  },
+  {
+    "id": 4,
+    "dialogue": "面朝浩瀚太平洋，桂滨的海风卷起五色石的呢喃。",
+    "audioFile": "shot_04.m4a",
+    "exactAudioDuration": 4.973696,
+    "recommendedClipDuration": 5.6
+  },
+  {
+    "id": 5,
+    "dialogue": "不用赶时间，没有打卡清单，只是顺着海浪的声音往前走。",
+    "audioFile": "shot_05.m4a",
+    "exactAudioDuration": 5.874603,
+    "recommendedClipDuration": 6.5
+  },
+  {
+    "id": 6,
+    "dialogue": "终点抵达松山道后，在三千年古汤木造楼阁前卸下风尘。",
+    "audioFile": "shot_06.m4a",
+    "exactAudioDuration": 5.965578,
+    "recommendedClipDuration": 6.6
+  },
+  {
+    "id": 7,
+    "dialogue": "旅行的意义不是去了哪里，而是找回感知世界的能力。下期见。",
+    "audioFile": "shot_07.m4a",
+    "exactAudioDuration": 5.609841,
+    "recommendedClipDuration": 6.2
+  }
+]

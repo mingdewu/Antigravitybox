@@ -35,6 +35,10 @@
     "render:intro": "remotion render ProductIntro5s out/intro-5s.mp4",
     "render:editor": "remotion render VideoEditor out/final-edit.mp4",
     "upgrade": "remotion upgrade",
+    "auto:voice": "node scripts/auto-voiceover.mjs",
+    "auto:match": "node scripts/auto-match-photos.mjs",
+    "auto:pipeline": "node scripts/auto-pipeline.mjs",
+    "auto:render": "node scripts/auto-pipeline.mjs && remotion render DatabaseAutoEditor out/final-auto-vlog.mp4",
     "lint": "eslint src && tsc"
   },
   "allowScripts": {

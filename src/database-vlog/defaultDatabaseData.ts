@@ -12,10 +12,10 @@ export const DEFAULT_DATABASE_ROWS: DatabaseRowItem[] = [
     sceneTitle: '启程启航 · 四国全岛全景',
     sceneType: 'map-intro',
     sceneDescription: '卫星地图宏观俯瞰，红色导航路线与信息栏展开，游标就位。',
-    isPhotoUploaded: false,
-    photoFileName: 'shot_01_camera.jpg',
+    isPhotoUploaded: true,
+    photoFileName: 'shot_03_highway.jpg',
     photoEffect: 'zoom-in',
-    clipDurationSeconds: 4.0, // 120 帧
+    clipDurationSeconds: 5.3, // 120 帧
     transitionType: 'fade',
   },
   {
@@ -25,10 +25,10 @@ export const DEFAULT_DATABASE_ROWS: DatabaseRowItem[] = [
     sceneTitle: 'STOP 01 · 鸣门海峡大漩涡',
     sceneType: 'map-poi-naruto',
     sceneDescription: '地图游标定格德岛鸣门，弹出鸣门漩涡图文卡片，信息栏高亮。',
-    isPhotoUploaded: false,
-    photoFileName: 'shot_02_naruto.jpg',
+    isPhotoUploaded: true,
+    photoFileName: 'shot_03_highway.png',
     photoEffect: 'subtle-float',
-    clipDurationSeconds: 5.0, // 150 帧
+    clipDurationSeconds: 5.3, // 150 帧
     transitionType: 'slide',
   },
   {
@@ -41,7 +41,7 @@ export const DEFAULT_DATABASE_ROWS: DatabaseRowItem[] = [
     isPhotoUploaded: true, // 开启 16:9 实拍图片剪辑演示
     photoFileName: 'shot_03_highway.jpg',
     photoEffect: 'zoom-out',
-    clipDurationSeconds: 4.5, // 135 帧
+    clipDurationSeconds: 6.4, // 135 帧
     transitionType: 'fade',
   },
   {
@@ -54,7 +54,7 @@ export const DEFAULT_DATABASE_ROWS: DatabaseRowItem[] = [
     isPhotoUploaded: false,
     photoFileName: 'shot_04_katsurahama.jpg',
     photoEffect: 'zoom-in',
-    clipDurationSeconds: 5.0, // 150 帧
+    clipDurationSeconds: 5.6, // 150 帧
     transitionType: 'slide',
   },
   {
@@ -67,7 +67,7 @@ export const DEFAULT_DATABASE_ROWS: DatabaseRowItem[] = [
     isPhotoUploaded: false,
     photoFileName: 'shot_05_beach_walk.jpg',
     photoEffect: 'pan-right',
-    clipDurationSeconds: 4.0, // 120 帧
+    clipDurationSeconds: 6.5, // 120 帧
     transitionType: 'fade',
   },
   {
@@ -80,7 +80,7 @@ export const DEFAULT_DATABASE_ROWS: DatabaseRowItem[] = [
     isPhotoUploaded: false,
     photoFileName: 'shot_06_dogo_onsen.jpg',
     photoEffect: 'zoom-in',
-    clipDurationSeconds: 5.0, // 150 帧
+    clipDurationSeconds: 6.6, // 150 帧
     transitionType: 'slide',
   },
   {
@@ -93,7 +93,7 @@ export const DEFAULT_DATABASE_ROWS: DatabaseRowItem[] = [
     isPhotoUploaded: false,
     photoFileName: 'shot_07_sunset.jpg',
     photoEffect: 'subtle-float',
-    clipDurationSeconds: 4.5, // 135 帧
+    clipDurationSeconds: 6.2, // 135 帧
     transitionType: 'fade',
   },
 ];
