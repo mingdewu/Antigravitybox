@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AbsoluteFill,
   Audio,
+  Easing,
   Img,
   interpolate,
   spring,
@@ -22,10 +23,10 @@ interface DatabaseShotRendererProps {
 export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const totalFrames = Math.round(row.clipDurationSeconds * fps);
+  const totalFrames = Math.max(1, Math.round(row.clipDurationSeconds * fps));
   const audioSrc = row.audioFileName || `shot_${String(row.id).padStart(2, '0')}.m4a`;
 
-  // 台词字幕弹簧弹入动效 (Spring)
+  // 字幕弹簧动效
   const subtitleSpring = spring({
     frame,
     fps,
@@ -34,393 +35,252 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
   const subtitleOpacity = interpolate(subtitleSpring, [0, 1], [0, 1]);
   const subtitleTranslateY = interpolate(subtitleSpring, [0, 1], [15, 0]);
 
-  // ==================== 模式 A：已上传图片 ➔ 16:9 智能剪裁与电影推镜 ====================
-  if (row.isPhotoUploaded) {
-    // 根据所选效果计算平缓流畅的 Ken Burns 电影级微动效 (16:9 动态视差)
-    let scale = 1.0;
-    let translateX = 0;
-    let translateY = 0;
+  // ==================== 1. 计算当前镜头的地图坐标、行驶进度与活跃 POI ====================
+  const type = (row.sceneType || '').toLowerCase();
+  const text = (row.dialogue + ' ' + row.sceneTitle).toLowerCase();
 
-    if (row.photoEffect === 'zoom-in') {
-      // 缓慢推镜放大 (1.0 -> 1.08)
-      scale = interpolate(frame, [0, totalFrames], [1.0, 1.08], {
-        extrapolateLeft: 'clamp',
-        extrapolateRight: 'clamp',
-      });
-    } else if (row.photoEffect === 'zoom-out') {
-      // 缓慢拉镜缩小 (1.08 -> 1.0)
-      scale = interpolate(frame, [0, totalFrames], [1.08, 1.0], {
-        extrapolateLeft: 'clamp',
-        extrapolateRight: 'clamp',
-      });
-    } else if (row.photoEffect === 'pan-right') {
-      // 缓慢向右横移
-      scale = 1.06;
-      translateX = interpolate(frame, [0, totalFrames], [-20, 20], {
-        extrapolateLeft: 'clamp',
-        extrapolateRight: 'clamp',
-      });
-    } else {
-      // 微弱呼吸浮动
-      scale = interpolate(
-        Math.sin((frame / totalFrames) * Math.PI),
-        [0, 1],
-        [1.02, 1.06]
-      );
-    }
+  let mapProgress = 0;
+  let activePoi: any = null;
+  let explanationEmphasis = 0.5;
 
-    return (
-      <AbsoluteFill style={{ backgroundColor: '#000000', overflow: 'hidden' }}>
-        {/* 底层模糊防黑边（防异形构图照片漏边） */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: -20,
-            backgroundImage: `url(${staticFile(`photos/${row.photoFileName}`)})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(30px) brightness(0.4)',
-            transform: 'scale(1.1)',
-          }}
-        />
+  if (type.includes('intro') || row.id === 1) {
+    // 启程全览：游标从起点微移，宏观俯瞰全岛
+    mapProgress = interpolate(frame, [0, totalFrames], [0.0, 0.08], {
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'clamp',
+    });
+    activePoi = null;
+    explanationEmphasis = 0.4;
+  } else if (type.includes('naruto') || text.includes('鸣门') || text.includes('大桥')) {
+    // STOP 01 鸣门海峡大漩涡 (起点)
+    mapProgress = 0.0;
+    activePoi = SHIKOKU_DEMO_TOUR.pois[0];
+    explanationEmphasis = 1.0;
+  } else if (type.includes('transport') || text.includes('公路') || text.includes('山脉') || text.includes('隧道')) {
+    // 跨山公路行进阶段：游标穿行四国中央山地公路 (0.08 -> 0.59)
+    mapProgress = interpolate(frame, [0, totalFrames], [0.08, 0.58], {
+      easing: Easing.bezier(0.42, 0, 0.58, 1),
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'clamp',
+    });
+    activePoi = null;
+    explanationEmphasis = 0.3; // 移动时半透明保持通透
+  } else if (type.includes('katsura') || text.includes('桂滨') || text.includes('高知')) {
+    // STOP 02 高知桂滨海岸
+    mapProgress = 0.597;
+    activePoi = SHIKOKU_DEMO_TOUR.pois[1];
+    explanationEmphasis = 1.0;
+  } else if (type.includes('scenery') || text.includes('沙滩') || text.includes('浪')) {
+    // 沿海行进阶段：游标向爱媛松山方向推进 (0.597 -> 0.95)
+    mapProgress = interpolate(frame, [0, totalFrames], [0.597, 0.95], {
+      easing: Easing.bezier(0.42, 0, 0.58, 1),
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'clamp',
+    });
+    activePoi = null;
+    explanationEmphasis = 0.3;
+  } else if (type.includes('dogo') || text.includes('道后') || text.includes('温泉') || text.includes('松山')) {
+    // STOP 03 松山道后温泉本馆
+    mapProgress = 1.0;
+    activePoi = SHIKOKU_DEMO_TOUR.pois[2];
+    explanationEmphasis = 1.0;
+  } else {
+    // 收尾与全景回顾：100% 达成
+    mapProgress = 1.0;
+    activePoi = null;
+    explanationEmphasis = 0.8;
+  }
 
-        {/* 核心层：16:9 等比智能填充裁剪 (Cover) + Ken Burns 微动效 */}
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            position: 'absolute',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Img
-            src={staticFile(`photos/${row.photoFileName}`)}
+  const coveredKm = Number((317.7 * mapProgress).toFixed(1));
+
+  // ==================== 2. 渲染核心底层：真实卫星地图、行驶路线与信息栏 ====================
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#070D18', overflow: 'hidden' }}>
+      {/* 核心底图：高清全球卫星图 + 原生 GeoJSON 路线游标 */}
+      <MapBackground2D
+        initialView={SHIKOKU_DEMO_TOUR.mapInitialView}
+        route={SHIKOKU_DEMO_TOUR.route}
+        progress={mapProgress}
+        pois={SHIKOKU_DEMO_TOUR.pois}
+      />
+
+      {/* 左侧动态信息看板 (移动时半透明，到达驻留点时放大聚焦) */}
+      <SideInfoPanel
+        config={SHIKOKU_DEMO_TOUR}
+        progress={mapProgress}
+        coveredKm={coveredKm}
+        totalKm={317.7}
+        activePoi={activePoi}
+        explanationEmphasis={explanationEmphasis}
+      />
+
+      {/* 地图标注卡片 (当定位到具体景点时弹出图文卡) */}
+      {activePoi && (
+        <PhotoCard poi={{ ...activePoi, startFrame: 0, endFrame: 9999 }} />
+      )}
+
+      {/* ==================== 模式 A：若用户勾选了上传实拍图片，呈现 16:9 画幅 ==================== */}
+      {row.isPhotoUploaded && (
+        <AbsoluteFill style={{ zIndex: 30, overflow: 'hidden' }}>
+          {/* 背景模糊层防漏边 */}
+          <div
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
-              transformOrigin: 'center center',
+              position: 'absolute',
+              inset: -20,
+              backgroundImage: `url(${staticFile(`photos/${row.photoFileName}`)})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(35px) brightness(0.35)',
+              transform: 'scale(1.1)',
             }}
           />
-        </div>
 
-        {/* 电影级四周通透渐变暗角 */}
-        <AbsoluteFill
-          style={{
-            boxShadow: 'inset 0 0 120px rgba(0, 0, 0, 0.65)',
-            pointerEvents: 'none',
-          }}
-        />
+          {/* 核心 16:9 实拍图片 + Ken Burns 微动效 */}
+          {(() => {
+            let scale = 1.0;
+            let translateX = 0;
+            if (row.photoEffect === 'zoom-in') {
+              scale = interpolate(frame, [0, totalFrames], [1.0, 1.08], {
+                extrapolateLeft: 'clamp',
+                extrapolateRight: 'clamp',
+              });
+            } else if (row.photoEffect === 'zoom-out') {
+              scale = interpolate(frame, [0, totalFrames], [1.08, 1.0], {
+                extrapolateLeft: 'clamp',
+                extrapolateRight: 'clamp',
+              });
+            } else if (row.photoEffect === 'pan-right') {
+              scale = 1.05;
+              translateX = interpolate(frame, [0, totalFrames], [-20, 20], {
+                extrapolateLeft: 'clamp',
+                extrapolateRight: 'clamp',
+              });
+            } else {
+              scale = interpolate(
+                Math.sin((frame / totalFrames) * Math.PI),
+                [0, 1],
+                [1.02, 1.06]
+              );
+            }
 
-        {/* 左上角分镜徽标 */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 40,
-            left: 48,
-            backgroundColor: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            borderRadius: 8,
-            padding: '6px 14px',
-            color: '#38BDF8',
-            fontSize: 12,
-            fontWeight: 800,
-            letterSpacing: '0.1em',
-          }}
-        >
-          {row.badge} · {row.sceneTitle} (16:9 实拍图)
-        </div>
+            return (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'absolute',
+                  overflow: 'hidden',
+                }}
+              >
+                <Img
+                  src={staticFile(`photos/${row.photoFileName}`)}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transform: `scale(${scale}) translateX(${translateX}px)`,
+                    transformOrigin: 'center center',
+                  }}
+                />
+              </div>
+            );
+          })()}
 
-        {/* 底部对齐台词字幕 */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 60,
-            left: 0,
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            opacity: subtitleOpacity,
-            transform: `translateY(${subtitleTranslateY}px)`,
-          }}
-        >
+          {/* 电影四周暗角 */}
+          <AbsoluteFill
+            style={{
+              boxShadow: 'inset 0 0 140px rgba(0, 0, 0, 0.7)',
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* 画面右上角 GPS 地图标注徽章 */}
           <div
             style={{
-              background: 'rgba(15, 23, 42, 0.88)',
-              backdropFilter: 'blur(16px)',
-              padding: '14px 36px',
-              borderRadius: 30,
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
-              maxWidth: 900,
-              textAlign: 'center',
-              color: '#FFFFFF',
-              fontSize: 22,
-              fontWeight: 600,
-              letterSpacing: '0.04em',
-              textShadow: '0 2px 6px rgba(0,0,0,0.8)',
+              position: 'absolute',
+              top: 40,
+              right: 48,
+              backgroundColor: 'rgba(15, 23, 42, 0.85)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              borderRadius: 12,
+              padding: '8px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              color: '#38BDF8',
+              fontSize: 13,
+              fontWeight: 700,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
             }}
           >
-            {row.dialogue}
+            <span style={{ fontSize: 16 }}>📍</span>
+            <span>里程: {coveredKm} km · {row.sceneTitle}</span>
           </div>
-        </div>
+        </AbsoluteFill>
+      )}
 
-        {/* 自动真人语音旁白 */}
-        <Audio src={staticFile(`audio/${audioSrc}`)} volume={1.0} />
-      </AbsoluteFill>
-    );
-  }
-
-  // ==================== 模式 B：未上传图片 ➔ 智能地图或 16:9 骨架屏预演 ====================
-  const isMapScene = row.sceneType.startsWith('map-');
-
-  if (isMapScene) {
-    let activePoiIndex = 0;
-    let progress = 0;
-    if (row.sceneType === 'map-poi-naruto') {
-      activePoiIndex = 0;
-      progress = 0.0;
-    } else if (row.sceneType === 'map-poi-katsura') {
-      activePoiIndex = 1;
-      progress = 0.597;
-    } else if (row.sceneType === 'map-poi-dogo') {
-      activePoiIndex = 2;
-      progress = 1.0;
-    }
-
-    const currentPoi = SHIKOKU_DEMO_TOUR.pois[activePoiIndex];
-
-    return (
-      <AbsoluteFill style={{ backgroundColor: '#070D18', overflow: 'hidden' }}>
-        <MapBackground2D
-          initialView={SHIKOKU_DEMO_TOUR.mapInitialView}
-          route={SHIKOKU_DEMO_TOUR.route}
-          progress={progress}
-          pois={SHIKOKU_DEMO_TOUR.pois}
-        />
-
-        <SideInfoPanel
-          config={SHIKOKU_DEMO_TOUR}
-          progress={progress}
-          coveredKm={Number((317.7 * progress).toFixed(1))}
-          totalKm={317.7}
-          activePoi={currentPoi}
-          explanationEmphasis={1.0}
-        />
-
-        {currentPoi && <PhotoCard poi={{ ...currentPoi, startFrame: 0, endFrame: 9999 }} />}
-
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 60,
-            left: 0,
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            opacity: subtitleOpacity,
-            transform: `translateY(${subtitleTranslateY}px)`,
-            zIndex: 40,
-          }}
-        >
-          <div
-            style={{
-              background: 'rgba(15, 23, 42, 0.88)',
-              backdropFilter: 'blur(16px)',
-              padding: '14px 36px',
-              borderRadius: 30,
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
-              maxWidth: 900,
-              textAlign: 'center',
-              color: '#FFFFFF',
-              fontSize: 22,
-              fontWeight: 600,
-              letterSpacing: '0.04em',
-            }}
-          >
-            {row.dialogue}
-          </div>
-        </div>
-
-        {/* 自动真人语音旁白 */}
-        <Audio src={staticFile(`audio/${audioSrc}`)} volume={1.0} />
-      </AbsoluteFill>
-    );
-  }
-
-  // 待上传实拍照片的 16:9 导演监视器预览
-  return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: '#0F172A',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#FFFFFF',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}
-    >
-      {/* 16:9 电影监视器网格 */}
+      {/* 左上角分镜标识牌 */}
       <div
         style={{
           position: 'absolute',
-          inset: 0,
-          background:
-            'radial-gradient(circle at center, #1E293B 0%, #0F172A 100%)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
-
-      {/* 16:9 画幅四角安全框 */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 60,
-          left: 60,
-          width: 30,
-          height: 30,
-          borderTop: '2px solid rgba(56, 189, 248, 0.6)',
-          borderLeft: '2px solid rgba(56, 189, 248, 0.6)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          top: 60,
-          right: 60,
-          width: 30,
-          height: 30,
-          borderTop: '2px solid rgba(56, 189, 248, 0.6)',
-          borderRight: '2px solid rgba(56, 189, 248, 0.6)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 60,
-          left: 60,
-          width: 30,
-          height: 30,
-          borderBottom: '2px solid rgba(56, 189, 248, 0.6)',
-          borderLeft: '2px solid rgba(56, 189, 248, 0.6)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 60,
-          right: 60,
-          width: 30,
-          height: 30,
-          borderBottom: '2px solid rgba(56, 189, 248, 0.6)',
-          borderRight: '2px solid rgba(56, 189, 248, 0.6)',
-        }}
-      />
-
-      {/* 中心拍摄指引面板 */}
-      <div
-        style={{
-          zIndex: 10,
-          textAlign: 'center',
-          maxWidth: 720,
-          padding: '30px 40px',
-          background: 'rgba(15, 23, 42, 0.85)',
+          top: 40,
+          left: 48,
+          backgroundColor: 'rgba(15, 23, 42, 0.85)',
           backdropFilter: 'blur(16px)',
-          borderRadius: 24,
           border: '1px solid rgba(255, 255, 255, 0.15)',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+          borderRadius: 10,
+          padding: '8px 16px',
+          color: '#38BDF8',
+          fontSize: 13,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          zIndex: 40,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
         }}
       >
-        <div
-          style={{
-            display: 'inline-block',
-            backgroundColor: 'rgba(56, 189, 248, 0.15)',
-            border: '1px solid rgba(56, 189, 248, 0.4)',
-            color: '#38BDF8',
-            padding: '4px 14px',
-            borderRadius: 20,
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            marginBottom: 16,
-          }}
-        >
-          {row.badge} · 待上传实拍图片 (16:9 长视频)
-        </div>
-
-        <h2 style={{ margin: '0 0 10px 0', fontSize: 28, fontWeight: 800 }}>
-          {row.sceneTitle}
-        </h2>
-        <p style={{ margin: '0 0 20px 0', fontSize: 15, color: '#94A3B8' }}>
-          {row.sceneDescription}
-        </p>
-
-        <div
-          style={{
-            background: 'rgba(255, 255, 255, 0.04)',
-            borderRadius: 12,
-            padding: '12px 18px',
-            fontSize: 13,
-            color: '#CBD5E1',
-            display: 'inline-block',
-            textAlign: 'left',
-          }}
-        >
-          <div>🖼️ 放入照片：<code>public/photos/{row.photoFileName}</code></div>
-          <div style={{ marginTop: 4 }}>
-            ✂️ 剪辑机制：自动等比居中裁成 <b>16:9 横屏</b>，并施加电影微动效
-          </div>
-        </div>
+        {row.badge} · {row.sceneTitle} {row.isPhotoUploaded ? '(16:9 实拍图)' : '(卫星地图漫游)'}
       </div>
 
-      {/* 底部台词字幕 */}
+      {/* 底部高清居中台词字幕 */}
       <div
         style={{
           position: 'absolute',
-          bottom: 60,
+          bottom: 50,
           left: 0,
           width: '100%',
           display: 'flex',
           justifyContent: 'center',
           opacity: subtitleOpacity,
           transform: `translateY(${subtitleTranslateY}px)`,
+          zIndex: 50,
         }}
       >
         <div
           style={{
-            background: 'rgba(15, 23, 42, 0.88)',
-            backdropFilter: 'blur(16px)',
-            padding: '14px 36px',
-            borderRadius: 30,
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
-            maxWidth: 900,
+            background: 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(20px)',
+            padding: '14px 38px',
+            borderRadius: 32,
+            border: '1px solid rgba(255, 255, 255, 0.18)',
+            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6)',
+            maxWidth: 960,
             textAlign: 'center',
             color: '#FFFFFF',
-            fontSize: 22,
+            fontSize: 23,
             fontWeight: 600,
             letterSpacing: '0.04em',
+            textShadow: '0 2px 8px rgba(0,0,0,0.8)',
           }}
         >
           {row.dialogue}
         </div>
       </div>
 
-      {/* 自动真人语音旁白 */}
+      {/* 真实配音旁白音频 */}
       <Audio src={staticFile(`audio/${audioSrc}`)} volume={1.0} />
     </AbsoluteFill>
   );

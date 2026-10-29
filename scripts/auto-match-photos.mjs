@@ -1,13 +1,12 @@
 /**
- * 自动化模块二：照片目录智能扫描与无感装配 (Auto Photo Ingestion)
+ * 自动化模块二：照片目录智能扫描与按需装配 (Auto Photo Ingestion)
  *
  * 作用:
- *   用户拍摄照片后，无需人工改名或对号入座，直接把照片拖进 public/photos/ 目录。
+ *   用户拍摄照片后，拖进 public/photos/ 目录。
  *   脚本会自动：
  *   1. 扫描所有图片文件 (jpg, png, heic, webp)
- *   2. 若有苹果 HEIC 照片，自动调用系统 sips 工具快速无损转为标准通用 JPG
- *   3. 按拍摄时间或文件创建时间自动自然排序
- *   4. 动态装配到分镜数据库 (database_rows.json)，将 isPhotoUploaded 设为 true 并适配 16:9 裁剪！
+ *   2. 自动转换 HEIC 为通用 JPG
+ *   3. 优先匹配标记为实拍照片展示的分镜 (sceneType: photo-*)，保护地图巡航分镜不被无故覆盖！
  */
 
 import fs from 'fs';
@@ -28,13 +27,11 @@ const files = fs.readdirSync(PHOTOS_DIR);
 const validImages = [];
 
 for (const file of files) {
-  // 忽略 manifest 与隐藏文件
   if (file.startsWith('.') || file.endsWith('.json')) continue;
 
   const fullPath = path.join(PHOTOS_DIR, file);
   const ext = path.extname(file).toLowerCase();
 
-  // 如果是 HEIC 照片，自动转换为 JPG
   if (ext === '.heic') {
     const jpgName = file.replace(/\.heic$/i, '.jpg');
     const jpgPath = path.join(PHOTOS_DIR, jpgName);
@@ -56,27 +53,26 @@ for (const file of files) {
   }
 }
 
-// 按拍摄/创建时间自然排序
 validImages.sort((a, b) => a.mtime - b.mtime);
+console.log(`✓ 扫描完成，发现 ${validImages.length} 张可用实拍照片`);
 
-console.log(`✓ 扫描并整理完成，发现 ${validImages.length} 张可用实拍照片`);
-
-// 智能关联到分镜数据
 if (fs.existsSync(DB_PATH) && validImages.length > 0) {
   const rows = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
 
-  // 将照片分配到对应分镜
+  // 筛选出属于实拍类型的分镜行（例如 photo-transport, photo-scenery），避免污染地图主巡礼
+  const photoTargetRows = rows.filter((r) => r.sceneType && r.sceneType.startsWith('photo-'));
   const matchManifest = [];
+
   validImages.forEach((img, idx) => {
-    if (idx < rows.length) {
-      rows[idx].isPhotoUploaded = true;
-      rows[idx].photoFileName = img.fileName;
+    if (idx < photoTargetRows.length) {
+      photoTargetRows[idx].isPhotoUploaded = true;
+      photoTargetRows[idx].photoFileName = img.fileName;
       matchManifest.push({
-        targetShotId: rows[idx].id,
-        badge: rows[idx].badge,
+        targetShotId: photoTargetRows[idx].id,
+        badge: photoTargetRows[idx].badge,
         assignedPhotoFile: img.fileName,
       });
-      console.log(`  📸 自动装配: 分镜 #${rows[idx].id} (${rows[idx].badge}) ➔ ${img.fileName}`);
+      console.log(`  📸 智能装配至实拍分镜: #${photoTargetRows[idx].id} (${photoTargetRows[idx].sceneTitle}) ➔ ${img.fileName}`);
     }
   });
 
@@ -89,7 +85,7 @@ if (fs.existsSync(DB_PATH) && validImages.length > 0) {
   if (fs.existsSync(PUBLIC_DB_PATH)) {
     fs.writeFileSync(PUBLIC_DB_PATH, JSON.stringify(rows, null, 2));
   }
-  console.log(`✨ 成功将 ${matchManifest.length} 张照片装配到分镜数据库！`);
+  console.log(`✨ 成功将实拍照片按需装配到指定实拍分镜中！`);
 } else {
   console.log('ℹ️ 未检测到新照片或数据库，跳过装配。');
 }
