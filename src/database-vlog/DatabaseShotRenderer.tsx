@@ -23,6 +23,7 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const totalFrames = Math.round(row.clipDurationSeconds * fps);
+  const audioSrc = row.audioFileName || `shot_${String(row.id).padStart(2, '0')}.m4a`;
 
   // 台词字幕弹簧弹入动效 (Spring)
   const subtitleSpring = spring({
@@ -170,7 +171,7 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
         </div>
 
         {/* 自动真人语音旁白 */}
-        <Audio src={staticFile(`audio/shot_0${row.id}.m4a`)} volume={1.0} />
+        <Audio src={staticFile(`audio/${audioSrc}`)} volume={1.0} />
       </AbsoluteFill>
     );
   }
@@ -248,7 +249,7 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
         </div>
 
         {/* 自动真人语音旁白 */}
-        <Audio src={staticFile(`audio/shot_0${row.id}.m4a`)} volume={1.0} />
+        <Audio src={staticFile(`audio/${audioSrc}`)} volume={1.0} />
       </AbsoluteFill>
     );
   }
@@ -420,7 +421,7 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
       </div>
 
       {/* 自动真人语音旁白 */}
-      <Audio src={staticFile(`audio/shot_0${row.id}.m4a`)} volume={1.0} />
+      <Audio src={staticFile(`audio/${audioSrc}`)} volume={1.0} />
     </AbsoluteFill>
   );
 };

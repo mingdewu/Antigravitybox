@@ -5,12 +5,13 @@ export type SceneCategory =
   | 'map-poi-katsura' // 场景：地图高知桂滨特写
   | 'photo-scenery'   // 场景：自然风光图片展示
   | 'map-poi-dogo'    // 场景：地图道后温泉特写
-  | 'photo-outro';    // 场景：旅途收尾图片展示
+  | 'photo-outro'     // 场景：旅途收尾图片展示
+  | string;           // 支持任意自定义场景类型扩展
 
 export type PhotoKenBurnsEffect = 'zoom-in' | 'zoom-out' | 'pan-right' | 'subtle-float';
 
 export interface DatabaseRowItem {
-  /** 1. 编号：1 到 7 */
+  /** 1. 编号：动态递增分镜编号 (1, 2, ... N) */
   id: number;
   badge: string;
 
@@ -28,6 +29,9 @@ export interface DatabaseRowItem {
   photoEffect: PhotoKenBurnsEffect; // 16:9 电影微推镜动效
   clipDurationSeconds: number;    // 该图片展示时长（秒）
   transitionType: 'fade' | 'slide' | 'wipe';
+
+  /** 可选：自定义音频文件名 (默认 shot_XX.m4a) */
+  audioFileName?: string;
 }
 
 export interface DatabaseVideoConfig {

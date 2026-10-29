@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Remotion 数据库式图片上传与 16:9 自动剪辑工作台</title>
+  <title>Remotion 动态分镜数据库工作台 (16:9 长视频自动剪辑)</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     ::-webkit-scrollbar {
@@ -19,155 +19,190 @@
     }
   </style>
 </head>
-<body class="bg-[var(--background)] text-[var(--foreground)] p-4 sm:p-6 font-sans antialiased select-none">
+<body class="bg-[var(--background,#0b0f17)] text-[var(--foreground,#f1f5f9)] p-4 sm:p-6 font-sans antialiased">
 
-  <!-- 顶部统计与控制工具栏 -->
-  <div class="mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[var(--card)] p-4 rounded-xl border border-[var(--border)] shadow-sm">
+  <!-- 顶部标题与控制工具栏 -->
+  <div class="mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[var(--card,#131c2e)] p-4 rounded-xl border border-[var(--border,#1e293b)] shadow-sm">
     <div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2.5">
         <span class="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse"></span>
-        <h1 class="text-base font-bold text-[var(--foreground)] tracking-tight">数据库式图片剪辑工作台 (16:9 长视频)</h1>
-        <span class="text-xs bg-sky-500/10 text-sky-500 border border-sky-500/20 px-2 py-0.5 rounded font-mono font-bold">阶段一：图片工作流</span>
+        <h1 class="text-base font-bold text-white tracking-tight">动态分镜数据库工作台 (16:9 长视频)</h1>
+        <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold">无限镜头 · 动态增删</span>
       </div>
-      <p class="text-xs text-[var(--muted-foreground)] mt-1">
-        1 到 7 号分镜模板：台词、对应场景，右侧选择是否上传图片，自动裁切为 16:9 电影画幅并施加推镜头
+      <p class="text-xs text-slate-400 mt-1">
+        每一行对应一句台词、关联场景与右侧 16:9 实拍图片。支持任意自由添加、删除、排序，完全打破镜头数量限制！
       </p>
     </div>
 
-    <!-- 状态指示 -->
-    <div class="flex items-center gap-3">
-      <div class="text-xs bg-[var(--background)] border border-[var(--border)] px-3 py-1.5 rounded-lg flex items-center gap-2">
-        <span class="text-[var(--muted-foreground)]">分镜数:</span>
-        <span class="font-bold text-sky-500" id="totalShotsCount">7 个镜头</span>
+    <!-- 状态指示与快捷操作 -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <div class="text-xs bg-slate-900/80 border border-slate-700/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+        <span class="text-slate-400">分镜总数:</span>
+        <span class="font-bold text-sky-400" id="totalShotsCount">0 个镜头</span>
       </div>
-      <div class="text-xs bg-[var(--background)] border border-[var(--border)] px-3 py-1.5 rounded-lg flex items-center gap-2">
-        <span class="text-[var(--muted-foreground)]">成片总长:</span>
-        <span class="font-bold text-emerald-500" id="totalDurationText">约 30.5 秒</span>
+      <div class="text-xs bg-slate-900/80 border border-slate-700/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+        <span class="text-slate-400">成片总长:</span>
+        <span class="font-bold text-emerald-400" id="totalDurationText">0.0 秒</span>
       </div>
-      <button onclick="copyDatabaseJSON()" class="text-xs bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 shadow-sm cursor-pointer">
-        <span>📋</span> 复制配置数据
+      <button onclick="addNewShot()" class="text-xs bg-sky-600 hover:bg-sky-500 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition cursor-pointer">
+        <span>➕</span> 添加分镜
+      </button>
+      <button onclick="downloadDatabaseJSON()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1 transition cursor-pointer">
+        <span>💾</span> 导出 JSON
+      </button>
+      <button onclick="copyDatabaseJSON()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1 transition cursor-pointer">
+        <span>📋</span> 复制配置
       </button>
     </div>
   </div>
 
   <!-- 数据库风格主表格容器 -->
-  <div class="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-sm">
-    <table class="w-full text-left border-collapse min-w-[880px]">
+  <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
+    <table class="w-full text-left border-collapse min-w-[960px]">
       <thead>
-        <tr class="border-b border-[var(--border)] bg-[var(--card)] text-xs font-semibold text-[var(--muted-foreground)]">
-          <th class="py-3 px-4 w-16 text-center">编号</th>
-          <th class="py-3 px-4 w-1/3">第二列：每一句台词 (Dialogue)</th>
-          <th class="py-3 px-4 w-1/4">第三列：对应场景 (Scene)</th>
-          <th class="py-3 px-4 w-1/3">第四列：右侧是否上传图片与 16:9 裁剪</th>
+        <tr class="border-b border-slate-800 bg-slate-900/90 text-xs font-semibold text-slate-400">
+          <th class="py-3 px-3 w-14 text-center">序号</th>
+          <th class="py-3 px-4 w-[34%]">第二列：台词 / 旁白解说 (Dialogue)</th>
+          <th class="py-3 px-4 w-[28%]">第三列：对应场景设定 (Scene)</th>
+          <th class="py-3 px-4 w-[32%]">第四列：右侧是否上传图片与 16:9 裁剪</th>
+          <th class="py-3 px-3 w-16 text-center">操作</th>
         </tr>
       </thead>
-      <tbody id="databaseTableBody" class="divide-y divide-[var(--border)] text-xs">
-        <!-- 由 JavaScript 动态渲染 1 到 7 行 -->
+      <tbody id="databaseTableBody" class="divide-y divide-slate-800/80 text-xs">
+        <!-- 由 JavaScript 动态渲染 N 个镜头行 -->
       </tbody>
     </table>
   </div>
 
-  <!-- 底部说明条 -->
-  <div class="mt-4 p-3.5 bg-[var(--card)] border border-[var(--border)] rounded-lg text-xs text-[var(--muted-foreground)] flex items-center justify-between">
+  <!-- 底部添加按钮与说明栏 -->
+  <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-slate-400">
     <div class="flex items-center gap-2">
       <span class="text-base">✂️</span>
       <span>
-        <b>16:9 智能剪辑机制</b>：无论上传的是手机 4:3、单反 3:2 还是竖屏 9:16 照片，Remotion 均会自动居中<b>裁剪为标准的 1920×1080 (16:9) 电影画幅</b>，并施加缓慢的 <b>Ken Burns 电影推拉微动效</b>！
+        <b>16:9 智能剪裁引擎</b>：上传任意构图照片（手机 4:3、竖屏 9:16、单反 3:2），系统均会自动居中<b>裁剪为标准的 1920×1080 电影画幅</b>，并施加缓慢推拉微动效！
       </span>
     </div>
-    <div class="font-mono text-[11px] text-[var(--muted-foreground)]">
-      public/photos/
+    <div class="flex items-center gap-2">
+      <button onclick="addNewShot()" class="text-xs bg-sky-600/90 hover:bg-sky-500 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition cursor-pointer">
+        <span>➕</span> 添加新分镜镜头
+      </button>
+      <button onclick="promptImportJSON()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg font-medium transition cursor-pointer">
+        <span>📥</span> 导入配置
+      </button>
     </div>
   </div>
 
   <script>
-    // 1 到 7 号镜头的初始图片数据库
-    const databaseRows = [
+    // 初始化分镜数据库 (支持从 public/database_rows.json 动态读取或使用默认模板)
+    let databaseRows = [];
+
+    const DEFAULT_INIT_DATA = [
       {
         id: 1,
-        badge: '#01',
+        badge: 'SHOT #01',
         dialogue: '逃离城市的最快方式，就是只带一台相机出发。',
-        sceneTitle: '启程启航 · 四国全景',
-        sceneType: '地图宏观航拍',
-        sceneDesc: '卫星全览俯瞰，路线展开，游标就位',
-        isPhotoUploaded: false,
-        photoFileName: 'shot_01_camera.jpg',
-        photoEffect: '缓慢推镜 (Zoom In)',
-        duration: 4.0,
+        sceneTitle: '启程启航 · 四国全岛全景',
+        sceneType: 'map-intro',
+        sceneDescription: '卫星地图宏观俯瞰，红色导航路线与信息栏展开，游标就位。',
+        isPhotoUploaded: true,
+        photoFileName: 'shot_03_highway.jpg',
+        photoEffect: 'zoom-in',
+        clipDurationSeconds: 5.3,
+        transitionType: 'fade'
       },
       {
         id: 2,
-        badge: '#02',
+        badge: 'SHOT #02',
         dialogue: '第一站来到鸣门海峡，俯瞰奔腾澎湃的大漩涡。',
-        sceneTitle: 'STOP 01 · 鸣门海峡',
-        sceneType: '地图景点特写',
-        sceneDesc: '游标定格德岛鸣门，弹出漩涡卡片',
-        isPhotoUploaded: false,
-        photoFileName: 'shot_02_naruto.jpg',
-        photoEffect: '呼吸微浮 (Subtle Float)',
-        duration: 5.0,
+        sceneTitle: 'STOP 01 · 鸣门海峡大漩涡',
+        sceneType: 'map-poi-naruto',
+        sceneDescription: '地图游标定格德岛鸣门，弹出鸣门漩涡图文卡片，信息栏高亮。',
+        isPhotoUploaded: true,
+        photoFileName: 'shot_03_highway.png',
+        photoEffect: 'subtle-float',
+        clipDurationSeconds: 5.3,
+        transitionType: 'slide'
       },
       {
         id: 3,
-        badge: '#03',
+        badge: 'SHOT #03',
         dialogue: '穿过险峻峡谷的山野公路，窗外的大山逐渐变成了太平洋。',
-        sceneTitle: '跨山公路 · 盘山公路实拍',
-        sceneType: '实拍图片展示',
-        sceneDesc: '四国中央构造线高速公路穿越抓拍',
-        isPhotoUploaded: true, // 样例已开启上传
+        sceneTitle: '跨山公路 · 蜿蜒盘山公路实拍图',
+        sceneType: 'photo-transport',
+        sceneDescription: '四国中央山地公路穿越，航拍弯道或车窗抓拍照片。',
+        isPhotoUploaded: true,
         photoFileName: 'shot_03_highway.jpg',
-        photoEffect: '缓慢拉远 (Zoom Out)',
-        duration: 4.5,
+        photoEffect: 'zoom-out',
+        clipDurationSeconds: 6.4,
+        transitionType: 'fade'
       },
       {
         id: 4,
-        badge: '#04',
+        badge: 'SHOT #04',
         dialogue: '面朝浩瀚太平洋，桂滨的海风卷起五色石的呢喃。',
-        sceneTitle: 'STOP 02 · 高知桂滨',
-        sceneType: '地图景点特写',
-        sceneDesc: '游标定格高知桂滨，弹出海滩龙马卡片',
+        sceneTitle: 'STOP 02 · 高知桂滨海岸',
+        sceneType: 'map-poi-katsura',
+        sceneDescription: '地图游标定格高知桂滨，弹出太平洋海滩与坂本龙马像卡片。',
         isPhotoUploaded: false,
         photoFileName: 'shot_04_katsurahama.jpg',
-        photoEffect: '缓慢推镜 (Zoom In)',
-        duration: 5.0,
+        photoEffect: 'zoom-in',
+        clipDurationSeconds: 5.6,
+        transitionType: 'slide'
       },
       {
         id: 5,
-        badge: '#05',
+        badge: 'SHOT #05',
         dialogue: '不用赶时间，没有打卡清单，只是顺着海浪的声音往前走。',
-        sceneTitle: '海滨漫步 · 沙滩浪花特写',
-        sceneType: '实拍图片展示',
-        sceneDesc: '太平洋岸边沙滩漫步或落日浪花照片',
+        sceneTitle: '海滨漫步 · 蔚蓝浪花与沙滩特写',
+        sceneType: 'photo-scenery',
+        sceneDescription: '太平洋岸边沙滩漫步或落日浪花实拍照片。',
         isPhotoUploaded: false,
         photoFileName: 'shot_05_beach_walk.jpg',
-        photoEffect: '水平平移 (Pan Right)',
-        duration: 4.0,
-      },
-      {
-        id: 6,
-        badge: '#06',
-        dialogue: '终点抵达松山道后，在三千年古汤木造楼阁前卸下风尘。',
-        sceneTitle: 'STOP 03 · 道后温泉本馆',
-        sceneType: '地图景点特写',
-        sceneDesc: '游标定格爱媛松山，里程达100%',
-        isPhotoUploaded: false,
-        photoFileName: 'shot_06_dogo_onsen.jpg',
-        photoEffect: '缓慢推镜 (Zoom In)',
-        duration: 5.0,
-      },
-      {
-        id: 7,
-        badge: '#07',
-        dialogue: '旅行的意义不是去了哪里，而是找回感知世界的能力。下期见。',
-        sceneTitle: '旅途总结 · 落日终章',
-        sceneType: '实拍图片展示',
-        sceneDesc: '全岛全景定镜收束，伴随落日余晖淡出',
-        isPhotoUploaded: false,
-        photoFileName: 'shot_07_sunset.jpg',
-        photoEffect: '呼吸微浮 (Subtle Float)',
-        duration: 4.5,
-      },
+        photoEffect: 'pan-right',
+        clipDurationSeconds: 6.5,
+        transitionType: 'fade'
+      }
     ];
+
+    // 尝试拉取当前工程的配置，拉取不到则用初始配置
+    fetch('database_rows.json')
+      .then(res => {
+        if (!res.ok) throw new Error('Not found');
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          databaseRows = data;
+        } else {
+          databaseRows = DEFAULT_INIT_DATA;
+        }
+        reindexRows();
+        renderTable();
+      })
+      .catch(() => {
+        databaseRows = DEFAULT_INIT_DATA;
+        reindexRows();
+        renderTable();
+      });
+
+    // 重新排序并规范编号
+    function reindexRows() {
+      databaseRows.forEach((row, idx) => {
+        row.id = idx + 1;
+        row.badge = `SHOT #${String(row.id).padStart(2, '0')}`;
+      });
+      updateStats();
+    }
+
+    function updateStats() {
+      const countEl = document.getElementById('totalShotsCount');
+      const durationEl = document.getElementById('totalDurationText');
+      if (countEl) countEl.innerText = `${databaseRows.length} 个镜头`;
+      
+      const totalSec = databaseRows.reduce((acc, r) => acc + (parseFloat(r.clipDurationSeconds) || 5.0), 0);
+      const totalFrames = Math.round(totalSec * 30);
+      if (durationEl) durationEl.innerText = `${totalSec.toFixed(1)} 秒 (${totalFrames} 帧)`;
+    }
 
     function renderTable() {
       const tbody = document.getElementById('databaseTableBody');
@@ -175,86 +210,154 @@
 
       databaseRows.forEach((row, idx) => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-[var(--sidebar)]/50 transition-colors';
+        tr.className = 'hover:bg-slate-800/40 transition-colors';
 
         tr.innerHTML = `
           <!-- 1. 编号 -->
-          <td class="py-3.5 px-4 text-center font-bold">
-            <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-[var(--secondary)] text-[var(--secondary-foreground)] text-xs font-mono font-bold shadow-xs">
+          <td class="py-3 px-3 text-center align-top pt-4">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-sky-400 text-xs font-mono font-bold shadow-xs">
               ${row.id}
             </span>
+            <div class="flex flex-col gap-1 items-center mt-2">
+              <button onclick="moveRow(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="w-6 h-5 flex items-center justify-center text-[10px] bg-slate-800 hover:bg-slate-700 disabled:opacity-20 text-slate-300 rounded cursor-pointer" title="上移">▲</button>
+              <button onclick="moveRow(${idx}, 1)" ${idx === databaseRows.length - 1 ? 'disabled' : ''} class="w-6 h-5 flex items-center justify-center text-[10px] bg-slate-800 hover:bg-slate-700 disabled:opacity-20 text-slate-300 rounded cursor-pointer" title="下移">▼</button>
+            </div>
           </td>
 
           <!-- 2. 台词/旁白 -->
-          <td class="py-3.5 px-4">
+          <td class="py-3 px-4 align-top">
             <textarea 
-              oninput="updateDialogue(${idx}, this.value)"
-              rows="2" 
-              class="w-full p-2.5 bg-[var(--background)] border border-[var(--border)] rounded-md text-xs text-[var(--foreground)] resize-none focus:outline-none focus:ring-1 focus:ring-sky-500 transition leading-relaxed"
-            >${row.dialogue}</textarea>
-            <div class="flex justify-between items-center text-[10px] text-[var(--muted-foreground)] mt-1">
-              <span>字数: ${row.dialogue.length} 字</span>
-              <span>16:9 展映时长: ${row.duration}s</span>
+              oninput="updateField(${idx}, 'dialogue', this.value)"
+              rows="3" 
+              placeholder="输入该分镜的台词或解说旁白文案..."
+              class="w-full p-2.5 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-sky-500 transition leading-relaxed"
+            >${row.dialogue || ''}</textarea>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1.5 px-0.5">
+              <span>字数: ${(row.dialogue || '').length} 字</span>
+              <div class="flex items-center gap-1">
+                <span>镜头时长:</span>
+                <input 
+                  type="number" 
+                  step="0.1" 
+                  min="1" 
+                  value="${row.clipDurationSeconds || 5.0}" 
+                  onchange="updateField(${idx}, 'clipDurationSeconds', parseFloat(this.value) || 5.0)" 
+                  class="w-14 bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-right text-sky-400 font-mono font-bold"
+                />
+                <span>秒</span>
+              </div>
             </div>
           </td>
 
           <!-- 3. 对应场景 -->
-          <td class="py-3.5 px-4 align-top">
-            <div class="flex items-center gap-1.5 mb-1.5">
-              <span class="px-2 py-0.5 rounded text-[11px] font-bold ${
-                row.sceneType.includes('地图') 
-                  ? 'bg-sky-500/10 text-sky-500 border border-sky-500/20' 
-                  : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-              }">
-                ${row.sceneType}
-              </span>
+          <td class="py-3 px-4 align-top">
+            <div class="flex items-center gap-2 mb-2">
+              <select 
+                onchange="updateField(${idx}, 'sceneType', this.value)"
+                class="bg-slate-800 border border-slate-700 text-sky-300 font-semibold text-[11px] rounded px-2 py-1 focus:outline-none"
+              >
+                <option value="map-intro" ${row.sceneType === 'map-intro' ? 'selected' : ''}>🌐 地图宏观巡礼</option>
+                <option value="map-poi-naruto" ${row.sceneType === 'map-poi-naruto' ? 'selected' : ''}>📍 地图鸣门特写</option>
+                <option value="map-poi-katsura" ${row.sceneType === 'map-poi-katsura' ? 'selected' : ''}>📍 地图桂滨特写</option>
+                <option value="map-poi-dogo" ${row.sceneType === 'map-poi-dogo' ? 'selected' : ''}>📍 地图道后特写</option>
+                <option value="photo-transport" ${row.sceneType === 'photo-transport' ? 'selected' : ''}>🚗 交通行进实拍</option>
+                <option value="photo-scenery" ${row.sceneType === 'photo-scenery' ? 'selected' : ''}>🌄 自然风光实拍</option>
+                <option value="photo-outro" ${row.sceneType === 'photo-outro' ? 'selected' : ''}>🎬 旅途终章收尾</option>
+              </select>
             </div>
-            <div class="font-bold text-xs text-[var(--foreground)]">${row.sceneTitle}</div>
-            <div class="text-[11px] text-[var(--muted-foreground)] mt-1 leading-snug">${row.sceneDesc}</div>
+            <input 
+              type="text" 
+              value="${row.sceneTitle || ''}" 
+              placeholder="场景主标题 (如: STOP 01 · 鸣门大漩涡)"
+              oninput="updateField(${idx}, 'sceneTitle', this.value)"
+              class="w-full mb-1.5 px-2.5 py-1.5 bg-slate-900 border border-slate-700/80 rounded-md text-xs font-bold text-slate-100 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            />
+            <textarea 
+              rows="2"
+              placeholder="场景细节描述..."
+              oninput="updateField(${idx}, 'sceneDescription', this.value)"
+              class="w-full p-2 bg-slate-900/60 border border-slate-800 rounded-md text-[11px] text-slate-400 resize-none focus:outline-none"
+            >${row.sceneDescription || ''}</textarea>
           </td>
 
           <!-- 4. 右侧是否上传图片与 16:9 剪裁 -->
-          <td class="py-3.5 px-4 align-top">
-            <div class="bg-[var(--background)] p-3 rounded-xl border border-[var(--border)] flex flex-col gap-2.5">
+          <td class="py-3 px-4 align-top">
+            <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 flex flex-col gap-2.5">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5">
+                <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                   <span>📷</span> 是否上传实拍图片:
                 </span>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" onchange="toggleUpload(${idx}, this.checked)" ${row.isPhotoUploaded ? 'checked' : ''} class="sr-only peer">
-                  <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                  <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                 </label>
               </div>
 
               <!-- 状态与 16:9 剪辑参数 -->
-              <div class="pt-2 border-t border-[var(--border)] text-[11px]">
+              <div class="pt-2 border-t border-slate-800 text-[11px]">
                 ${row.isPhotoUploaded ? `
-                  <div class="text-emerald-500 font-bold flex items-center gap-1.5">
-                    <span class="text-xs">✓</span> 已启用 16:9 智能剪裁与长视频呈现
+                  <div class="text-emerald-400 font-bold flex items-center gap-1">
+                    <span>✓</span> 已启用 16:9 智能裁剪与长视频呈现
                   </div>
-                  <div class="text-[var(--muted-foreground)] mt-1.5 flex flex-col gap-1">
-                    <div>目标文件: <code class="text-[var(--foreground)] bg-[var(--card)] px-1.5 py-0.5 rounded border border-[var(--border)]">public/photos/${row.photoFileName}</code></div>
-                    <div class="flex items-center gap-2 mt-0.5">
-                      <span class="text-sky-400 font-medium">✂️ 动效: ${row.photoEffect}</span>
-                      <span>•</span>
-                      <span>画幅: <b>16:9 (1920×1080)</b></span>
+                  <div class="text-slate-400 mt-2 flex flex-col gap-1.5">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-slate-400">图片文件名:</span>
+                      <input 
+                        type="text" 
+                        value="${row.photoFileName || `shot_${String(row.id).padStart(2, '0')}.jpg`}" 
+                        oninput="updateField(${idx}, 'photoFileName', this.value)"
+                        class="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-xs font-mono text-slate-200"
+                      />
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                      <div class="flex items-center gap-1">
+                        <span>动效:</span>
+                        <select 
+                          onchange="updateField(${idx}, 'photoEffect', this.value)"
+                          class="bg-slate-800 border border-slate-700 text-sky-400 text-[11px] rounded px-1.5 py-0.5"
+                        >
+                          <option value="zoom-in" ${row.photoEffect === 'zoom-in' ? 'selected' : ''}>缓慢推镜 (Zoom In)</option>
+                          <option value="zoom-out" ${row.photoEffect === 'zoom-out' ? 'selected' : ''}>缓慢拉远 (Zoom Out)</option>
+                          <option value="pan-right" ${row.photoEffect === 'pan-right' ? 'selected' : ''}>水平向右平移 (Pan Right)</option>
+                          <option value="subtle-float" ${row.photoEffect === 'subtle-float' ? 'selected' : ''}>呼吸微浮 (Subtle Float)</option>
+                        </select>
+                      </div>
+                      <span class="text-emerald-400 font-bold">16:9 自动居中裁切</span>
                     </div>
                   </div>
                 ` : `
                   <div class="text-sky-400 font-medium flex items-center gap-1">
                     <span>⚡</span> 默认模式: 自动调度卫星地图与路线漫游
                   </div>
-                  <div class="text-[var(--muted-foreground)] mt-1">
-                    放入照片到 <code>public/photos/${row.photoFileName}</code> 即可替换为 16:9 实拍图
+                  <div class="text-slate-400 mt-1 text-[11px]">
+                    放入照片到 <code>public/photos/</code> 并勾选上方开关即可替换为 16:9 实拍图
                   </div>
                 `}
               </div>
             </div>
           </td>
+
+          <!-- 5. 操作：删除 -->
+          <td class="py-3 px-3 text-center align-top pt-4">
+            <button 
+              onclick="deleteShot(${idx})" 
+              class="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition cursor-pointer"
+              title="删除此分镜"
+            >
+              🗑️
+            </button>
+          </td>
         `;
 
         tbody.appendChild(tr);
       });
+
+      updateStats();
+    }
+
+    function updateField(idx, key, val) {
+      databaseRows[idx][key] = val;
+      updateStats();
     }
 
     function toggleUpload(idx, checked) {
@@ -262,18 +365,83 @@
       renderTable();
     }
 
-    function updateDialogue(idx, val) {
-      databaseRows[idx].dialogue = val;
+    function addNewShot() {
+      const nextId = databaseRows.length + 1;
+      const newShot = {
+        id: nextId,
+        badge: `SHOT #${String(nextId).padStart(2, '0')}`,
+        dialogue: '在这里输入新镜头的旁白解说文案...',
+        sceneTitle: `全新镜头 · 分镜 #${nextId}`,
+        sceneType: 'photo-scenery',
+        sceneDescription: '实拍风景照片展示，自动裁剪为 16:9 画幅。',
+        isPhotoUploaded: false,
+        photoFileName: `shot_${String(nextId).padStart(2, '0')}.jpg`,
+        photoEffect: 'zoom-in',
+        clipDurationSeconds: 5.0,
+        transitionType: 'fade'
+      };
+      databaseRows.push(newShot);
+      reindexRows();
+      renderTable();
+    }
+
+    function deleteShot(idx) {
+      if (databaseRows.length <= 1) {
+        alert('至少需要保留 1 个分镜镜头！');
+        return;
+      }
+      if (confirm(`确定要删除镜头 #${databaseRows[idx].id} 吗？`)) {
+        databaseRows.splice(idx, 1);
+        reindexRows();
+        renderTable();
+      }
+    }
+
+    function moveRow(idx, direction) {
+      const targetIdx = idx + direction;
+      if (targetIdx < 0 || targetIdx >= databaseRows.length) return;
+      const temp = databaseRows[idx];
+      databaseRows[idx] = databaseRows[targetIdx];
+      databaseRows[targetIdx] = temp;
+      reindexRows();
+      renderTable();
     }
 
     function copyDatabaseJSON() {
       const json = JSON.stringify(databaseRows, null, 2);
       navigator.clipboard.writeText(json).then(() => {
-        alert('✓ 7 个镜头的图片数据库配置已复制到剪贴板！');
+        alert(`✓ 已成功复制当前全部 ${databaseRows.length} 个镜头的配置数据！`);
       });
     }
 
-    renderTable();
+    function downloadDatabaseJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(databaseRows, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "database_rows.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function promptImportJSON() {
+      const input = prompt('请粘贴 JSON 分镜数组配置数据:');
+      if (input) {
+        try {
+          const parsed = JSON.parse(input);
+          if (Array.isArray(parsed)) {
+            databaseRows = parsed;
+            reindexRows();
+            renderTable();
+            alert(`✓ 成功导入 ${databaseRows.length} 个分镜！`);
+          } else {
+            alert('❌ 导入格式有误，必须为 JSON 数组！');
+          }
+        } catch (e) {
+          alert('❌ JSON 解析失败: ' + e.message);
+        }
+      }
+    }
   </script>
 </body>
 </html>

@@ -20,7 +20,7 @@ import { DEFAULT_DATABASE_ROWS } from './database-vlog/defaultDatabaseData';
 export const RemotionRoot: React.FC = () => {
   return (
     <>
-      {/* ==================== 数据库驱动的智能自动剪辑与地图模板 (7大镜头全自动流) ==================== */}
+      {/* ==================== 数据库驱动的智能自动剪辑与地图模板 (动态多镜头全自动流) ==================== */}
       <Composition
         id="DatabaseAutoEditor"
         component={DatabaseAutoEditor}

@@ -1,10 +1,12 @@
 [
   {
     "targetShotId": 1,
+    "badge": "SHOT #01",
     "assignedPhotoFile": "shot_03_highway.jpg"
   },
   {
     "targetShotId": 2,
+    "badge": "SHOT #02",
     "assignedPhotoFile": "shot_03_highway.png"
   }
 ]
