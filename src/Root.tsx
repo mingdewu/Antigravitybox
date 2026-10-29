@@ -11,10 +11,28 @@ import {
 } from './fuji-vlog/stagesData';
 import { GeoExplainer } from './geo-explainer/GeoExplainer';
 import { SHIKOKU_DEMO_TOUR } from './geo-explainer/config/demoTourData';
+import {
+  DatabaseAutoEditor,
+  calculateDatabaseTotalFrames,
+} from './database-vlog/DatabaseAutoEditor';
+import { DEFAULT_DATABASE_ROWS } from './database-vlog/defaultDatabaseData';
 
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* ==================== 数据库驱动的智能自动剪辑与地图模板 (7大镜头全自动流) ==================== */}
+      <Composition
+        id="DatabaseAutoEditor"
+        component={DatabaseAutoEditor}
+        durationInFrames={calculateDatabaseTotalFrames(DEFAULT_DATABASE_ROWS, 30)}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          rows: DEFAULT_DATABASE_ROWS,
+        }}
+      />
+
       {/* ==================== 地理行程漫游讲解模板 (30秒 / 900帧) ==================== */}
       <Composition
         id="GeoTour30s"
