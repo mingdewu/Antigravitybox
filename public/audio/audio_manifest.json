@@ -1,51 +1,51 @@
 [
   {
     "id": 1,
-    "dialogue": "逃离城市的最快方式，就是只带一台相机出发。",
+    "dialogue": "这次我们租车自驾四国，沿着海岸线计划开三百多公里。",
     "audioFile": "shot_01.m4a",
-    "exactAudioDuration": 4.669887,
-    "recommendedClipDuration": 5.3
+    "exactAudioDuration": 5.466939,
+    "recommendedClipDuration": 6.1
   },
   {
     "id": 2,
-    "dialogue": "第一站来到鸣门海峡，俯瞰奔腾澎湃的大漩涡。",
+    "dialogue": "第一站直接开到鸣门大桥，桥下海风大得几乎拿不稳相机。",
     "audioFile": "shot_02.m4a",
-    "exactAudioDuration": 4.706712,
-    "recommendedClipDuration": 5.3
-  },
-  {
-    "id": 3,
-    "dialogue": "穿过险峻峡谷的山野公路，窗外的大山逐渐变成了太平洋。",
-    "audioFile": "shot_03.m4a",
-    "exactAudioDuration": 5.755011,
+    "exactAudioDuration": 5.78644,
     "recommendedClipDuration": 6.4
   },
   {
+    "id": 3,
+    "dialogue": "中途穿过四国中央山脉，山里一直在下着小阵雨，路特别窄。",
+    "audioFile": "shot_03.m4a",
+    "exactAudioDuration": 6.139728,
+    "recommendedClipDuration": 6.7
+  },
+  {
     "id": 4,
-    "dialogue": "面朝浩瀚太平洋，桂滨的海风卷起五色石的呢喃。",
+    "dialogue": "下午四点多终于开到高知的桂滨，太平洋的浪特别高。",
     "audioFile": "shot_04.m4a",
-    "exactAudioDuration": 4.973696,
-    "recommendedClipDuration": 5.6
+    "exactAudioDuration": 5.203946,
+    "recommendedClipDuration": 5.8
   },
   {
     "id": 5,
-    "dialogue": "不用赶时间，没有打卡清单，只是顺着海浪的声音往前走。",
+    "dialogue": "在沙滩边走了一圈，鞋里全进了沙子，但夕阳的光线正好落下来。",
     "audioFile": "shot_05.m4a",
-    "exactAudioDuration": 5.874603,
-    "recommendedClipDuration": 6.5
+    "exactAudioDuration": 6.766531,
+    "recommendedClipDuration": 7.4
   },
   {
     "id": 6,
-    "dialogue": "终点抵达松山道后，在三千年古汤木造楼阁前卸下风尘。",
+    "dialogue": "天黑前赶到了松山的道后温泉，这里的木头老建筑特别有质感。",
     "audioFile": "shot_06.m4a",
-    "exactAudioDuration": 5.965578,
-    "recommendedClipDuration": 6.6
+    "exactAudioDuration": 6.284218,
+    "recommendedClipDuration": 6.9
   },
   {
     "id": 7,
-    "dialogue": "旅行的意义不是去了哪里，而是找回感知世界的能力。下期见。",
+    "dialogue": "一天开下来挺累的，不过拍到了不少满意的照片。先回酒店休息了。",
     "audioFile": "shot_07.m4a",
-    "exactAudioDuration": 5.609841,
-    "recommendedClipDuration": 6.2
+    "exactAudioDuration": 6.539909,
+    "recommendedClipDuration": 7.1
   }
 ]
