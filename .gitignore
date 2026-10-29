@@ -1,7 +1,20 @@
+# Dependencies
 node_modules
 dist
-.DS_Store
-.env
 
-# Ignore the output video from Git but not videos you import into src/.
+# OS files
+.DS_Store
+
+# Environment variables
+.env
+*.local
+
+# Build & Render Outputs
 out
+*.mp4
+*.MP4
+*.mov
+*.MOV
+
+# Local cache & temporary files
+.gemini/
