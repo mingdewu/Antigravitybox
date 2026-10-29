@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Remotion 动态分镜数据库工作台 (16:9 长视频自动剪辑)</title>
+  <title>Remotion AI 智能文案与动态分镜工作台</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     ::-webkit-scrollbar {
@@ -19,34 +19,31 @@
     }
   </style>
 </head>
-<body class="bg-[var(--background,#0b0f17)] text-[var(--foreground,#f1f5f9)] p-4 sm:p-6 font-sans antialiased">
+<body class="bg-slate-950 text-slate-100 p-4 sm:p-6 font-sans antialiased">
 
-  <!-- 顶部标题与控制工具栏 -->
-  <div class="mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[var(--card,#131c2e)] p-4 rounded-xl border border-[var(--border,#1e293b)] shadow-sm">
+  <!-- 顶部控制与状态栏 -->
+  <div class="mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow-sm">
     <div>
       <div class="flex items-center gap-2.5">
-        <span class="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse"></span>
-        <h1 class="text-base font-bold text-white tracking-tight">动态分镜数据库工作台 (16:9 长视频)</h1>
-        <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold">无限镜头 · 动态增删</span>
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <h1 class="text-base font-bold text-white tracking-tight">AI 智能文案与动态分镜工作台</h1>
+        <span class="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded font-mono font-bold">文案驱动 · 镜头数量不写死</span>
       </div>
       <p class="text-xs text-slate-400 mt-1">
-        每一行对应一句台词、关联场景与右侧 16:9 实拍图片。支持任意自由添加、删除、排序，完全打破镜头数量限制！
+        输入任意长短的自然语言文案，AI 自动按叙事节奏切分镜头（每句或每几句一个画面），完全由内容决定镜头数！
       </p>
     </div>
 
-    <!-- 状态指示与快捷操作 -->
+    <!-- 实时状态指示 -->
     <div class="flex flex-wrap items-center gap-2.5">
-      <div class="text-xs bg-slate-900/80 border border-slate-700/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+      <div class="text-xs bg-slate-800/90 border border-slate-700/80 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
         <span class="text-slate-400">分镜总数:</span>
         <span class="font-bold text-sky-400" id="totalShotsCount">0 个镜头</span>
       </div>
-      <div class="text-xs bg-slate-900/80 border border-slate-700/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+      <div class="text-xs bg-slate-800/90 border border-slate-700/80 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
         <span class="text-slate-400">成片总长:</span>
         <span class="font-bold text-emerald-400" id="totalDurationText">0.0 秒</span>
       </div>
-      <button onclick="addNewShot()" class="text-xs bg-sky-600 hover:bg-sky-500 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition cursor-pointer">
-        <span>➕</span> 添加分镜
-      </button>
       <button onclick="downloadDatabaseJSON()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1 transition cursor-pointer">
         <span>💾</span> 导出 JSON
       </button>
@@ -56,162 +53,217 @@
     </div>
   </div>
 
-  <!-- 数据库风格主表格容器 -->
+  <!-- 核心交互区 1：AI 智能文案输入与分镜分析器 -->
+  <div class="mb-5 bg-gradient-to-r from-slate-900 via-slate-900 to-sky-950/40 p-4 sm:p-5 rounded-xl border border-sky-900/40 shadow-lg">
+    <div class="flex items-center justify-between mb-2.5">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">🤖</span>
+        <span class="text-xs font-bold text-white uppercase tracking-wider">AI 智能分析文案 ➔ 自动拆解分镜画面</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="loadSampleText('short')" class="text-[11px] text-slate-400 hover:text-sky-300 underline cursor-pointer">填入 3 镜头精简文案</button>
+        <span class="text-slate-600">|</span>
+        <button onclick="loadSampleText('medium')" class="text-[11px] text-slate-400 hover:text-sky-300 underline cursor-pointer">填入 5 镜头自驾文案</button>
+      </div>
+    </div>
+
+    <textarea 
+      id="aiScriptInput" 
+      rows="3" 
+      placeholder="在此粘贴或输入您的完整旅行游记、AI 生成的解说词（想写几句就写几句，无需人工分行）..."
+      class="w-full p-3 bg-slate-950/80 border border-slate-700/80 rounded-lg text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 transition leading-relaxed resize-y font-normal"
+    >这次我们租车自驾四国，沿着海岸线计划开三百多公里。第一站直接开到鸣门大桥，桥下海风大得几乎拿不稳相机。中途穿过四国中央山脉，山里一直在下着小阵雨，路特别窄。下午四点多终于开到高知的桂滨，太平洋的浪特别高。天黑前赶到了松山的道后温泉，这里的木头老建筑特别有质感。一天开下来挺累的，不过拍到了不少满意的照片。先回酒店休息了。</textarea>
+
+    <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3 text-xs text-slate-300">
+        <span class="text-slate-400">镜头切分粒度:</span>
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="radio" name="splitMode" value="semantic-group" checked class="text-sky-500 focus:ring-0">
+          <span>影视节奏合并 (1~2 句合为一镜，叙事自然)</span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="radio" name="splitMode" value="sentence-by-sentence" class="text-sky-500 focus:ring-0">
+          <span>严格一句一镜</span>
+        </label>
+      </div>
+
+      <button 
+        onclick="runAIAnalysis()" 
+        class="text-xs bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-2 rounded-lg flex items-center gap-2 shadow-md transition cursor-pointer"
+      >
+        <span>✨</span> 智能分析文案并生成镜头列表
+      </button>
+    </div>
+  </div>
+
+  <!-- 核心交互区 2：动态分镜数据库表格 -->
   <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
     <table class="w-full text-left border-collapse min-w-[960px]">
       <thead>
         <tr class="border-b border-slate-800 bg-slate-900/90 text-xs font-semibold text-slate-400">
           <th class="py-3 px-3 w-14 text-center">序号</th>
-          <th class="py-3 px-4 w-[34%]">第二列：台词 / 旁白解说 (Dialogue)</th>
-          <th class="py-3 px-4 w-[28%]">第三列：对应场景设定 (Scene)</th>
+          <th class="py-3 px-4 w-[34%]">第二列：旁白解说文案 (Dialogue)</th>
+          <th class="py-3 px-4 w-[28%]">第三列：AI 智能推导场景 (Scene)</th>
           <th class="py-3 px-4 w-[32%]">第四列：右侧是否上传图片与 16:9 裁剪</th>
           <th class="py-3 px-3 w-16 text-center">操作</th>
         </tr>
       </thead>
       <tbody id="databaseTableBody" class="divide-y divide-slate-800/80 text-xs">
-        <!-- 由 JavaScript 动态渲染 N 个镜头行 -->
+        <!-- 动态渲染 -->
       </tbody>
     </table>
   </div>
 
-  <!-- 底部添加按钮与说明栏 -->
+  <!-- 底部功能栏 -->
   <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-slate-400">
     <div class="flex items-center gap-2">
       <span class="text-base">✂️</span>
       <span>
-        <b>16:9 智能剪裁引擎</b>：上传任意构图照片（手机 4:3、竖屏 9:16、单反 3:2），系统均会自动居中<b>裁剪为标准的 1920×1080 电影画幅</b>，并施加缓慢推拉微动效！
+        <b>16:9 裁剪逻辑</b>：上传任意照片均会自动居中裁剪为标准的 1920×1080 电影画幅并施加推镜。镜头数已由 AI 文案分析完全动态掌控！
       </span>
     </div>
     <div class="flex items-center gap-2">
-      <button onclick="addNewShot()" class="text-xs bg-sky-600/90 hover:bg-sky-500 text-white font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition cursor-pointer">
-        <span>➕</span> 添加新分镜镜头
-      </button>
-      <button onclick="promptImportJSON()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg font-medium transition cursor-pointer">
-        <span>📥</span> 导入配置
+      <button onclick="addNewShot()" class="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition cursor-pointer">
+        <span>➕</span> 手动追加镜头
       </button>
     </div>
   </div>
 
   <script>
-    // 初始化分镜数据库 (支持从 public/database_rows.json 动态读取或使用默认模板)
     let databaseRows = [];
 
-    const DEFAULT_INIT_DATA = [
-      {
-        id: 1,
-        badge: 'SHOT #01',
-        dialogue: '这次我们租车自驾四国，沿着海岸线计划开三百多公里。',
-        sceneTitle: '德岛启程 · 四国路线全貌',
-        sceneType: 'map-intro',
-        sceneDescription: '卫星路线全览展开，交代自驾里程与环岛第一天出发定位。',
-        isPhotoUploaded: true,
-        photoFileName: 'shot_03_highway.jpg',
-        photoEffect: 'zoom-in',
-        clipDurationSeconds: 5.0,
-        transitionType: 'fade'
-      },
-      {
-        id: 2,
-        badge: 'SHOT #02',
-        dialogue: '第一站直接开到鸣门大桥，桥下海风大得几乎拿不稳相机。',
-        sceneTitle: 'STOP 01 · 德岛鸣门大漩涡',
-        sceneType: 'map-poi-naruto',
-        sceneDescription: '大鸣门桥下俯瞰激流回旋，长焦捕捉海浪冲撞细节。',
-        isPhotoUploaded: true,
-        photoFileName: 'shot_03_highway.png',
-        photoEffect: 'subtle-float',
-        clipDurationSeconds: 5.0,
-        transitionType: 'slide'
-      },
-      {
-        id: 3,
-        badge: 'SHOT #03',
-        dialogue: '中途穿过四国中央山脉，山里一直在下着小阵雨，路特别窄。',
-        sceneTitle: '盘山公路 · 跨山隧道与弯道实拍',
-        sceneType: 'photo-transport',
-        sceneDescription: '四国中央山地公路雨中穿行，车窗抓拍与连续弯道路况。',
-        isPhotoUploaded: true,
-        photoFileName: 'shot_03_highway.jpg',
-        photoEffect: 'zoom-out',
-        clipDurationSeconds: 5.5,
-        transitionType: 'fade'
-      },
-      {
-        id: 4,
-        badge: 'SHOT #04',
-        dialogue: '下午四点多终于开到高知的桂滨，太平洋的浪特别高。',
-        sceneTitle: 'STOP 02 · 高知桂滨海岸',
-        sceneType: 'map-poi-katsura',
-        sceneDescription: '桂滨断崖海湾，下午侧逆光下的巨浪拍打防波堤与礁石。',
-        isPhotoUploaded: false,
-        photoFileName: 'shot_04_katsurahama.jpg',
-        photoEffect: 'zoom-in',
-        clipDurationSeconds: 5.0,
-        transitionType: 'slide'
-      },
-      {
-        id: 5,
-        badge: 'SHOT #05',
-        dialogue: '在沙滩边走了一圈，鞋里全进了沙子，但夕阳的光线正好落下来。',
-        sceneTitle: '岸边漫步 · 礁石与浪花光影抓拍',
-        sceneType: 'photo-scenery',
-        sceneDescription: '抓拍太平洋浪花涌向沙滩的瞬间，纪实光影特写。',
-        isPhotoUploaded: false,
-        photoFileName: 'shot_05_beach_walk.jpg',
-        photoEffect: 'pan-right',
-        clipDurationSeconds: 5.5,
-        transitionType: 'fade'
-      },
-      {
-        id: 6,
-        badge: 'SHOT #06',
-        dialogue: '天黑前赶到了松山的道后温泉，这里的木头老建筑特别有质感。',
-        sceneTitle: 'STOP 03 · 松山道后温泉本馆',
-        sceneType: 'map-poi-dogo',
-        sceneDescription: '傍晚亮灯的千年古汤本馆木质外立面与温泉街市井氛围。',
-        isPhotoUploaded: false,
-        photoFileName: 'shot_06_dogo_onsen.jpg',
-        photoEffect: 'zoom-in',
-        clipDurationSeconds: 5.2,
-        transitionType: 'slide'
-      },
-      {
-        id: 7,
-        badge: 'SHOT #07',
-        dialogue: '一天开下来挺累的，不过拍到了不少满意的照片。先回酒店休息了。',
-        sceneTitle: '旅程收尾 · 暮色余晖与行程回顾',
-        sceneType: 'photo-outro',
-        sceneDescription: '暮色中的松山市区远眺收束，完成当天行程记录归档。',
-        isPhotoUploaded: false,
-        photoFileName: 'shot_07_sunset.jpg',
-        photoEffect: 'subtle-float',
-        clipDurationSeconds: 5.5,
-        transitionType: 'fade'
-      }
-    ];
+    // 智能分析函数 (前端纯逻辑秒级响应)
+    function analyzeScript(rawText, mode) {
+      if (!rawText || !rawText.trim()) return [];
 
-    // 尝试拉取当前工程的配置，拉取不到则用初始配置
+      const cleanText = rawText.replace(/\r\n/g, '\n').trim();
+      const rawSentences = cleanText
+        .split(/([。！？!?；;\n]+)/)
+        .reduce((acc, cur, idx, arr) => {
+          if (idx % 2 === 0 && cur.trim()) {
+            const punctuation = arr[idx + 1] ? arr[idx + 1].trim() : '。';
+            acc.push(cur.trim() + (punctuation.includes('\n') ? '。' : punctuation));
+          }
+          return acc;
+        }, [])
+        .filter(s => s.length > 2);
+
+      const shotSegments = [];
+      if (mode === 'sentence-by-sentence') {
+        for (const s of rawSentences) shotSegments.push(s);
+      } else {
+        let buffer = '';
+        for (const sentence of rawSentences) {
+          if ((buffer + sentence).length <= 32) {
+            buffer += (buffer ? ' ' : '') + sentence;
+          } else {
+            if (buffer) shotSegments.push(buffer);
+            buffer = sentence;
+          }
+        }
+        if (buffer) shotSegments.push(buffer);
+      }
+
+      return shotSegments.map((dialogue, index) => {
+        const id = index + 1;
+        const badge = `SHOT #${String(id).padStart(2, '0')}`;
+        const text = dialogue.toLowerCase();
+
+        let sceneType = 'photo-scenery';
+        let sceneTitle = `分镜画面 #${id}`;
+        let sceneDescription = '实拍画面呈现，居中裁剪为 16:9 电影画幅。';
+        let photoEffect = 'zoom-in';
+
+        if (index === 0 || text.includes('出发') || text.includes('启程') || text.includes('公里') || text.includes('路线') || text.includes('计划')) {
+          sceneType = 'map-intro';
+          sceneTitle = '德岛启程 · 路线全景';
+          sceneDescription = '宏观地图展示行程路线轨迹，交代地理位置与出发定位。';
+          photoEffect = 'zoom-in';
+        } else if (text.includes('鸣门') || text.includes('漩涡') || text.includes('大桥') || text.includes('海峡')) {
+          sceneType = 'map-poi-naruto';
+          sceneTitle = 'STOP 01 · 德岛鸣门大漩涡';
+          sceneDescription = '大鸣门桥下激流大漩涡特写，展现海风与壮观水势。';
+          photoEffect = 'subtle-float';
+        } else if (text.includes('山') || text.includes('公路') || text.includes('开') || text.includes('车') || text.includes('隧道') || text.includes('雨')) {
+          sceneType = 'photo-transport';
+          sceneTitle = '盘山公路 · 跨山隧道实拍';
+          sceneDescription = '车窗或行车视角抓拍，展现真实自驾路况与山间天气。';
+          photoEffect = 'zoom-out';
+        } else if (text.includes('桂滨') || text.includes('海') || text.includes('浪') || text.includes('沙滩') || text.includes('高知')) {
+          sceneType = 'map-poi-katsura';
+          sceneTitle = 'STOP 02 · 高知桂滨海岸';
+          sceneDescription = '海滨巨浪拍击礁石，傍晚自然逆光特写。';
+          photoEffect = 'pan-right';
+        } else if (text.includes('温泉') || text.includes('道后') || text.includes('古') || text.includes('建筑') || text.includes('老街') || text.includes('松山')) {
+          sceneType = 'map-poi-dogo';
+          sceneTitle = 'STOP 03 · 松山道后温泉本馆';
+          sceneDescription = '老街亮灯时的木造建筑与街巷氛围，展现历史质感。';
+          photoEffect = 'zoom-in';
+        } else if (index === shotSegments.length - 1 || text.includes('结束') || text.includes('收尾') || text.includes('休息') || text.includes('酒店')) {
+          sceneType = 'photo-outro';
+          sceneTitle = '旅程收尾 · 暮色余晖与回顾';
+          sceneDescription = '全景暮色定镜淡出，总结当日拍摄收获并收束。';
+          photoEffect = 'subtle-float';
+        }
+
+        const estimatedDuration = Math.max(4.0, Math.round(((dialogue.length / 4.2) + 0.8) * 10) / 10);
+
+        return {
+          id,
+          badge,
+          dialogue,
+          sceneTitle,
+          sceneType,
+          sceneDescription,
+          isPhotoUploaded: index < 2, // 前两张示例已就绪
+          photoFileName: index === 0 ? 'shot_03_highway.jpg' : (index === 1 ? 'shot_03_highway.png' : `shot_${String(id).padStart(2, '0')}.jpg`),
+          photoEffect,
+          clipDurationSeconds: estimatedDuration,
+          transitionType: index % 2 === 0 ? 'fade' : 'slide',
+        };
+      });
+    }
+
+    function runAIAnalysis() {
+      const text = document.getElementById('aiScriptInput').value;
+      const mode = document.querySelector('input[name="splitMode"]:checked').value;
+      const shots = analyzeScript(text, mode);
+
+      if (shots.length === 0) {
+        alert('请输入有效文案！');
+        return;
+      }
+
+      databaseRows = shots;
+      renderTable();
+      alert(`✨ AI 分析完成！已根据您的文案语义智能规划出 ${shots.length} 个镜头画面！`);
+    }
+
+    function loadSampleText(type) {
+      const input = document.getElementById('aiScriptInput');
+      if (type === 'short') {
+        input.value = "这次我们租车自驾四国，沿着海岸线计划开三百多公里。下午在桂滨抓拍到了很大的太平洋海浪。天黑前赶到松山泡了温泉，拍到了满意的照片。";
+      } else {
+        input.value = "这次我们租车自驾四国，沿着海岸线计划开三百多公里。第一站直接开到鸣门大桥，桥下海风大得几乎拿不稳相机。中途穿过四国中央山脉，山里一直在下着小阵雨，路特别窄。下午四点多终于开到高知的桂滨，太平洋的浪特别高。天黑前赶到了松山的道后温泉，这里的木头老建筑特别有质感。一天开下来挺累的，不过拍到了不少满意的照片。先回酒店休息了。";
+      }
+      runAIAnalysis();
+    }
+
+    // 尝试拉取当前工程的配置
     fetch('database_rows.json')
-      .then(res => {
-        if (!res.ok) throw new Error('Not found');
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           databaseRows = data;
         } else {
-          databaseRows = DEFAULT_INIT_DATA;
+          runAIAnalysis();
         }
-        reindexRows();
         renderTable();
       })
       .catch(() => {
-        databaseRows = DEFAULT_INIT_DATA;
-        reindexRows();
-        renderTable();
+        runAIAnalysis();
       });
 
-    // 重新排序并规范编号
     function reindexRows() {
       databaseRows.forEach((row, idx) => {
         row.id = idx + 1;
@@ -239,7 +291,7 @@
         tr.className = 'hover:bg-slate-800/40 transition-colors';
 
         tr.innerHTML = `
-          <!-- 1. 编号 -->
+          <!-- 1. 编号与排序 -->
           <td class="py-3 px-3 text-center align-top pt-4">
             <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-sky-400 text-xs font-mono font-bold shadow-xs">
               ${row.id}
@@ -255,7 +307,7 @@
             <textarea 
               oninput="updateField(${idx}, 'dialogue', this.value)"
               rows="3" 
-              placeholder="输入该分镜的台词或解说旁白文案..."
+              placeholder="输入分镜台词文案..."
               class="w-full p-2.5 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-sky-500 transition leading-relaxed"
             >${row.dialogue || ''}</textarea>
             <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1.5 px-0.5">
@@ -275,7 +327,7 @@
             </div>
           </td>
 
-          <!-- 3. 对应场景 -->
+          <!-- 3. AI 推导对应场景 -->
           <td class="py-3 px-4 align-top">
             <div class="flex items-center gap-2 mb-2">
               <select 
@@ -294,7 +346,7 @@
             <input 
               type="text" 
               value="${row.sceneTitle || ''}" 
-              placeholder="场景主标题 (如: STOP 01 · 鸣门大漩涡)"
+              placeholder="场景主标题"
               oninput="updateField(${idx}, 'sceneTitle', this.value)"
               class="w-full mb-1.5 px-2.5 py-1.5 bg-slate-900 border border-slate-700/80 rounded-md text-xs font-bold text-slate-100 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
@@ -348,7 +400,7 @@
                           <option value="subtle-float" ${row.photoEffect === 'subtle-float' ? 'selected' : ''}>呼吸微浮 (Subtle Float)</option>
                         </select>
                       </div>
-                      <span class="text-emerald-400 font-bold">16:9 自动居中裁切</span>
+                      <span class="text-emerald-400 font-bold">16:9 自动裁切</span>
                     </div>
                   </div>
                 ` : `
@@ -356,7 +408,7 @@
                     <span>⚡</span> 默认模式: 自动调度卫星地图与路线漫游
                   </div>
                   <div class="text-slate-400 mt-1 text-[11px]">
-                    放入照片到 <code>public/photos/</code> 并勾选上方开关即可替换为 16:9 实拍图
+                    放入照片到 <code>public/photos/</code> 并开启即可替换为 16:9 实拍图
                   </div>
                 `}
               </div>
@@ -396,8 +448,8 @@
       const newShot = {
         id: nextId,
         badge: `SHOT #${String(nextId).padStart(2, '0')}`,
-        dialogue: '在这里输入新镜头的旁白解说文案...',
-        sceneTitle: `全新镜头 · 分镜 #${nextId}`,
+        dialogue: '输入该镜头的解说台词...',
+        sceneTitle: `新增分镜画面 #${nextId}`,
         sceneType: 'photo-scenery',
         sceneDescription: '实拍风景照片展示，自动裁剪为 16:9 画幅。',
         isPhotoUploaded: false,
@@ -413,14 +465,12 @@
 
     function deleteShot(idx) {
       if (databaseRows.length <= 1) {
-        alert('至少需要保留 1 个分镜镜头！');
+        alert('至少保留 1 个分镜镜头！');
         return;
       }
-      if (confirm(`确定要删除镜头 #${databaseRows[idx].id} 吗？`)) {
-        databaseRows.splice(idx, 1);
-        reindexRows();
-        renderTable();
-      }
+      databaseRows.splice(idx, 1);
+      reindexRows();
+      renderTable();
     }
 
     function moveRow(idx, direction) {
@@ -436,7 +486,7 @@
     function copyDatabaseJSON() {
       const json = JSON.stringify(databaseRows, null, 2);
       navigator.clipboard.writeText(json).then(() => {
-        alert(`✓ 已成功复制当前全部 ${databaseRows.length} 个镜头的配置数据！`);
+        alert(`✓ 已成功复制当前全部 ${databaseRows.length} 个分镜的配置数据！`);
       });
     }
 
@@ -448,25 +498,6 @@
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-    }
-
-    function promptImportJSON() {
-      const input = prompt('请粘贴 JSON 分镜数组配置数据:');
-      if (input) {
-        try {
-          const parsed = JSON.parse(input);
-          if (Array.isArray(parsed)) {
-            databaseRows = parsed;
-            reindexRows();
-            renderTable();
-            alert(`✓ 成功导入 ${databaseRows.length} 个分镜！`);
-          } else {
-            alert('❌ 导入格式有误，必须为 JSON 数组！');
-          }
-        } catch (e) {
-          alert('❌ JSON 解析失败: ' + e.message);
-        }
-      }
     }
   </script>
 </body>

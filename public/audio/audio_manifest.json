@@ -8,43 +8,22 @@
   },
   {
     "id": 2,
-    "dialogue": "第一站直接开到鸣门大桥，桥下海风大得几乎拿不稳相机。",
+    "dialogue": "下午在桂滨抓拍到了很大的太平洋海浪。",
     "audioFile": "shot_02.m4a",
-    "exactAudioDuration": 5.78644,
-    "recommendedClipDuration": 6.4
+    "exactAudioDuration": 3.903628,
+    "recommendedClipDuration": 4.5
   },
   {
     "id": 3,
-    "dialogue": "中途穿过四国中央山脉，山里一直在下着小阵雨，路特别窄。",
+    "dialogue": "天黑前赶到了松山的道后温泉，木头老建筑特别有质感。",
     "audioFile": "shot_03.m4a",
-    "exactAudioDuration": 6.139728,
-    "recommendedClipDuration": 6.7
+    "exactAudioDuration": 5.773379,
+    "recommendedClipDuration": 6.4
   },
   {
     "id": 4,
-    "dialogue": "下午四点多终于开到高知的桂滨，太平洋的浪特别高。",
+    "dialogue": "一天开下来挺累的，不过拍到了不少满意的照片。 先回酒店休息了。",
     "audioFile": "shot_04.m4a",
-    "exactAudioDuration": 5.203946,
-    "recommendedClipDuration": 5.8
-  },
-  {
-    "id": 5,
-    "dialogue": "在沙滩边走了一圈，鞋里全进了沙子，但夕阳的光线正好落下来。",
-    "audioFile": "shot_05.m4a",
-    "exactAudioDuration": 6.766531,
-    "recommendedClipDuration": 7.4
-  },
-  {
-    "id": 6,
-    "dialogue": "天黑前赶到了松山的道后温泉，这里的木头老建筑特别有质感。",
-    "audioFile": "shot_06.m4a",
-    "exactAudioDuration": 6.284218,
-    "recommendedClipDuration": 6.9
-  },
-  {
-    "id": 7,
-    "dialogue": "一天开下来挺累的，不过拍到了不少满意的照片。先回酒店休息了。",
-    "audioFile": "shot_07.m4a",
     "exactAudioDuration": 6.539909,
     "recommendedClipDuration": 7.1
   }
