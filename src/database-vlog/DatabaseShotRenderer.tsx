@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   AbsoluteFill,
+  Img,
   interpolate,
   spring,
   staticFile,
   useCurrentFrame,
   useVideoConfig,
-  Video,
 } from 'remotion';
 import { DatabaseRowItem } from './types';
 import { MapBackground2D } from '../geo-explainer/components/MapBackground2D';
@@ -21,8 +21,9 @@ interface DatabaseShotRendererProps {
 export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const totalFrames = Math.round(row.clipDurationSeconds * fps);
 
-  // 字幕弹入动效 (Spring)
+  // 台词字幕弹簧弹入动效 (Spring)
   const subtitleSpring = spring({
     frame,
     fps,
@@ -31,28 +32,89 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
   const subtitleOpacity = interpolate(subtitleSpring, [0, 1], [0, 1]);
   const subtitleTranslateY = interpolate(subtitleSpring, [0, 1], [15, 0]);
 
-  // ==================== 情况 A：已上传真实视频，执行自动剪辑 ====================
-  if (row.isUploaded) {
-    const startFromFrame = Math.round(row.autoTrimStartSeconds * fps);
+  // ==================== 模式 A：已上传图片 ➔ 16:9 智能剪裁与电影推镜 ====================
+  if (row.isPhotoUploaded) {
+    // 根据所选效果计算平缓流畅的 Ken Burns 电影级微动效 (16:9 动态视差)
+    let scale = 1.0;
+    let translateX = 0;
+    let translateY = 0;
+
+    if (row.photoEffect === 'zoom-in') {
+      // 缓慢推镜放大 (1.0 -> 1.08)
+      scale = interpolate(frame, [0, totalFrames], [1.0, 1.08], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      });
+    } else if (row.photoEffect === 'zoom-out') {
+      // 缓慢拉镜缩小 (1.08 -> 1.0)
+      scale = interpolate(frame, [0, totalFrames], [1.08, 1.0], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      });
+    } else if (row.photoEffect === 'pan-right') {
+      // 缓慢向右横移
+      scale = 1.06;
+      translateX = interpolate(frame, [0, totalFrames], [-20, 20], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      });
+    } else {
+      // 微弱呼吸浮动
+      scale = interpolate(
+        Math.sin((frame / totalFrames) * Math.PI),
+        [0, 1],
+        [1.02, 1.06]
+      );
+    }
 
     return (
       <AbsoluteFill style={{ backgroundColor: '#000000', overflow: 'hidden' }}>
-        {/* 自动剪辑裁切后的实拍视频 */}
-        <Video
-          src={staticFile(`shots/${row.videoFileName}`)}
-          startFrom={startFromFrame}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        {/* 底层模糊防黑边（防异形构图照片漏边） */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: -20,
+            backgroundImage: `url(${staticFile(`photos/${row.photoFileName}`)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(30px) brightness(0.4)',
+            transform: 'scale(1.1)',
+          }}
         />
 
-        {/* 电影级微弱暗角 */}
+        {/* 核心层：16:9 等比智能填充裁剪 (Cover) + Ken Burns 微动效 */}
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            position: 'absolute',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Img
+            src={staticFile(`photos/${row.photoFileName}`)}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
+              transformOrigin: 'center center',
+            }}
+          />
+        </div>
+
+        {/* 电影级四周通透渐变暗角 */}
         <AbsoluteFill
           style={{
-            boxShadow: 'inset 0 0 100px rgba(0, 0, 0, 0.65)',
+            boxShadow: 'inset 0 0 120px rgba(0, 0, 0, 0.65)',
             pointerEvents: 'none',
           }}
         />
 
-        {/* 左上角分镜徽章 */}
+        {/* 左上角分镜徽标 */}
         <div
           style={{
             position: 'absolute',
@@ -69,7 +131,7 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
             letterSpacing: '0.1em',
           }}
         >
-          {row.badge} · {row.sceneTitle}
+          {row.badge} · {row.sceneTitle} (16:9 实拍图)
         </div>
 
         {/* 底部对齐台词字幕 */}
@@ -109,12 +171,10 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
     );
   }
 
-  // ==================== 情况 B：未上传视频，渲染智能对应场景（地图或实拍占位） ====================
-  // 如果是地图相关场景：
+  // ==================== 模式 B：未上传图片 ➔ 智能地图或 16:9 骨架屏预演 ====================
   const isMapScene = row.sceneType.startsWith('map-');
 
   if (isMapScene) {
-    // 根据具体 POI 映射对应景点
     let activePoiIndex = 0;
     let progress = 0;
     if (row.sceneType === 'map-poi-naruto') {
@@ -132,7 +192,6 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
 
     return (
       <AbsoluteFill style={{ backgroundColor: '#070D18', overflow: 'hidden' }}>
-        {/* 真实卫星地图引擎 */}
         <MapBackground2D
           initialView={SHIKOKU_DEMO_TOUR.mapInitialView}
           route={SHIKOKU_DEMO_TOUR.route}
@@ -140,7 +199,6 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
           pois={SHIKOKU_DEMO_TOUR.pois}
         />
 
-        {/* 左上角信息栏 */}
         <SideInfoPanel
           config={SHIKOKU_DEMO_TOUR}
           progress={progress}
@@ -150,10 +208,8 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
           explanationEmphasis={1.0}
         />
 
-        {/* 右上角解释卡片 */}
         {currentPoi && <PhotoCard poi={{ ...currentPoi, startFrame: 0, endFrame: 9999 }} />}
 
-        {/* 底部台词字幕 */}
         <div
           style={{
             position: 'absolute',
@@ -190,7 +246,7 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
     );
   }
 
-  // 非地图实拍镜头（如车窗实拍、海滨漫步）但尚未上传视频：展示专业的导演分镜占位监视器
+  // 待上传实拍照片的 16:9 导演监视器预览
   return (
     <AbsoluteFill
       style={{
@@ -202,7 +258,7 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
-      {/* 网格电影监视器背景 */}
+      {/* 16:9 电影监视器网格 */}
       <div
         style={{
           position: 'absolute',
@@ -221,7 +277,7 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
         }}
       />
 
-      {/* 监视器四角裁切线 */}
+      {/* 16:9 画幅四角安全框 */}
       <div
         style={{
           position: 'absolute',
@@ -229,8 +285,8 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
           left: 60,
           width: 30,
           height: 30,
-          borderTop: '2px solid rgba(255,255,255,0.4)',
-          borderLeft: '2px solid rgba(255,255,255,0.4)',
+          borderTop: '2px solid rgba(56, 189, 248, 0.6)',
+          borderLeft: '2px solid rgba(56, 189, 248, 0.6)',
         }}
       />
       <div
@@ -240,8 +296,8 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
           right: 60,
           width: 30,
           height: 30,
-          borderTop: '2px solid rgba(255,255,255,0.4)',
-          borderRight: '2px solid rgba(255,255,255,0.4)',
+          borderTop: '2px solid rgba(56, 189, 248, 0.6)',
+          borderRight: '2px solid rgba(56, 189, 248, 0.6)',
         }}
       />
       <div
@@ -251,8 +307,8 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
           left: 60,
           width: 30,
           height: 30,
-          borderBottom: '2px solid rgba(255,255,255,0.4)',
-          borderLeft: '2px solid rgba(255,255,255,0.4)',
+          borderBottom: '2px solid rgba(56, 189, 248, 0.6)',
+          borderLeft: '2px solid rgba(56, 189, 248, 0.6)',
         }}
       />
       <div
@@ -262,12 +318,12 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
           right: 60,
           width: 30,
           height: 30,
-          borderBottom: '2px solid rgba(255,255,255,0.4)',
-          borderRight: '2px solid rgba(255,255,255,0.4)',
+          borderBottom: '2px solid rgba(56, 189, 248, 0.6)',
+          borderRight: '2px solid rgba(56, 189, 248, 0.6)',
         }}
       />
 
-      {/* 中央拍摄指导与自动剪辑提示 */}
+      {/* 中心拍摄指引面板 */}
       <div
         style={{
           zIndex: 10,
@@ -284,9 +340,9 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
         <div
           style={{
             display: 'inline-block',
-            backgroundColor: 'rgba(239, 68, 68, 0.2)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            color: '#F87171',
+            backgroundColor: 'rgba(56, 189, 248, 0.15)',
+            border: '1px solid rgba(56, 189, 248, 0.4)',
+            color: '#38BDF8',
             padding: '4px 14px',
             borderRadius: 20,
             fontSize: 12,
@@ -295,7 +351,7 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
             marginBottom: 16,
           }}
         >
-          {row.badge} · 待上传实拍素材
+          {row.badge} · 待上传实拍图片 (16:9 长视频)
         </div>
 
         <h2 style={{ margin: '0 0 10px 0', fontSize: 28, fontWeight: 800 }}>
@@ -316,9 +372,9 @@ export const DatabaseShotRenderer: React.FC<DatabaseShotRendererProps> = ({ row 
             textAlign: 'left',
           }}
         >
-          <div>📁 目标路径：<code>public/shots/{row.videoFileName}</code></div>
+          <div>🖼️ 放入照片：<code>public/photos/{row.photoFileName}</code></div>
           <div style={{ marginTop: 4 }}>
-            ✂️ 自动剪辑：从第 <b>{row.autoTrimStartSeconds}s</b> 开始自动截取 <b>{row.clipDurationSeconds}s</b> 成片
+            ✂️ 剪辑机制：自动等比居中裁成 <b>16:9 横屏</b>，并施加电影微动效
           </div>
         </div>
       </div>

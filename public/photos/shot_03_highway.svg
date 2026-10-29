@@ -1,0 +1,24 @@
+
+<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="60%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#bae6fd"/>
+    </linearGradient>
+    <linearGradient id="mountain" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#065f46"/>
+      <stop offset="100%" stop-color="#022c22"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <!-- 远山 -->
+  <polygon points="0,700 400,450 850,680 1300,420 1700,650 1920,550 1920,1080 0,1080" fill="url(#mountain)" opacity="0.8"/>
+  <!-- 近山 -->
+  <polygon points="0,850 500,580 1000,820 1500,540 1920,780 1920,1080 0,1080" fill="#064e3b"/>
+  <!-- 蜿蜒公路 -->
+  <path d="M 960,1080 Q 980,850 850,750 T 1100,620" fill="none" stroke="#475569" stroke-width="80" stroke-linecap="round"/>
+  <path d="M 960,1080 Q 980,850 850,750 T 1100,620" fill="none" stroke="#facc15" stroke-width="4" stroke-dasharray="20,20"/>
+  <text x="960" y="240" fill="#ffffff" font-size="52" font-weight="900" text-anchor="middle" font-family="sans-serif" filter="drop-shadow(0 4px 12px rgba(0,0,0,0.5))">SHIKOKU MOUNTAIN HIGHWAY</text>
+  <text x="960" y="300" fill="#e2e8f0" font-size="24" font-weight="500" text-anchor="middle" font-family="sans-serif">【16:9 实拍图片剪辑测试样例 · 自动推镜】</text>
+</svg>
